@@ -1,10 +1,19 @@
-FROM registry.access.redhat.com/ubi8/ubi-minimal AS ubi8
+FROM redhat/ubi8-minimal
 
 LABEL name="Percona Postgres Operator Deployer" \
       vendor="Percona" \
       summary="Kick start image for Percona Postgres Operator essentials deployment" \
       description="Deployer app is to take care of all Percona Postgres Operator essentials deployment" \
       maintainer="Percona Development <info@percona.com>"
+
+# Check https://access.redhat.com/errata/RHBA-2020:4536
+# and https://bugzilla.redhat.com/show_bug.cgi?id=1832743
+# for sources of enabling FIPS-140-2 support
+RUN set -ex; \
+    microdnf update; \
+    microdnf -y install crypto-policies-scripts; \
+    microdnf clean all; \
+    fips-mode-setup --enable
 
 COPY redhat/licenses /licenses
 COPY redhat/atomic/help.1 /help.1
@@ -19,7 +28,7 @@ RUN set -ex; \
     gpg --batch --export --armor 99DB70FAE1D7CE227FB6488205B555B38483C65D > ${GNUPGHOME}/RPM-GPG-KEY-centosofficial; \
     gpg --batch --export --armor 94E279EB8D8F25B21810ADF121EA45AB2F86D6A1 > ${GNUPGHOME}/RPM-GPG-KEY-EPEL-8; \
     rpmkeys --import ${GNUPGHOME}/RPM-GPG-KEY-centosofficial ${GNUPGHOME}/RPM-GPG-KEY-EPEL-8; \
-    microdnf install -y findutils;
+    microdnf -y install findutils;
 
 RUN set -ex; \
     microdnf -y update; \
